@@ -168,9 +168,21 @@ class RaiBlocks_Indicator():
         self.item_peer_count.connect('activate', self.set_default_display)
         menu.append(self.item_peer_count)
 
-        self.item_tps = gtk.MenuItem('TPS: Unknown')
-        self.item_tps.connect('activate', self.set_default_display)
-        menu.append(self.item_tps)
+        self.item_5s_tps = gtk.MenuItem('5s: Unknown')
+        self.item_5s_tps.connect('activate', self.set_default_display)
+        menu.append(self.item_5s_tps)
+
+        self.item_1m_tps = gtk.MenuItem('1m: Unknown')
+        self.item_1m_tps.connect('activate', self.set_default_display)
+        menu.append(self.item_1m_tps)
+
+        self.item_30m_tps = gtk.MenuItem('30m: Unknown')
+        self.item_30m_tps.connect('activate', self.set_default_display)
+        menu.append(self.item_30m_tps)
+
+        self.item_24h_tps = gtk.MenuItem('24h: Unknown')
+        self.item_24h_tps.connect('activate', self.set_default_display)
+        menu.append(self.item_24h_tps)
 
         self.item_frontiers = gtk.MenuItem('Frontiers: Unknown')
         self.item_frontiers.connect('activate', self.set_default_display)
@@ -243,7 +255,10 @@ class RaiBlocks_Indicator():
         club_data = self.fetch_club()
         self.item_block_count.set_label('Block Count: {}'.format(club_data['block_count']))
         self.item_peer_count.set_label('Peer Count: {}'.format(club_data['peer_count']))
-        self.item_tps.set_label('TPS: {:1.3f}'.format(club_data['tx_rate_30_min']))
+        self.item_5s_tps.set_label('5s: {:1.3f} tps'.format(club_data['tx_rate_5_sec']))
+        self.item_1m_tps.set_label('1m: {:1.3f} tps'.format(club_data['tx_rate_1_min']))
+        self.item_30m_tps.set_label('30m: {:1.3f} tps'.format(club_data['tx_rate_30_min']))
+        self.item_24h_tps.set_label('24h: {:1.3f} tps'.format(club_data['tx_rate_24_hr']))
         self.item_frontiers.set_label('Frontiers: {}'.format(club_data['frontier_count']))
 
         self.ind.set_label(self.default.get_label(), '')
