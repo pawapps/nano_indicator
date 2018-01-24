@@ -273,7 +273,14 @@ class RaiBlocks_Indicator():
         self.item_rank.set_label('CMC Rank: #{}'.format(cm_data_rai['rank']))
 
         for i in range(20):
-            self.item_crypto[i].set_label('{}.) {}: ${} (${})'.format(i+1, cm_data_top20[i]['name'], cm_data_top20[i]['price_usd'], cm_data_top20[i]['market_cap_usd']))
+            self.item_crypto[i].set_label('{}.) {}: ${} ( 1h:{}% | 24h:{}% | 7d:{}% )'.format(
+                i+1, cm_data_top20[i]['name'], 
+                cm_data_top20[i]['price_usd'], 
+                cm_data_top20[i]['percent_change_1h'],
+                cm_data_top20[i]['percent_change_24h'],
+                cm_data_top20[i]['percent_change_7d']
+                )
+            )
         
         club_data = self.fetch_club()
         self.item_block_count.set_label('Block Count: {}'.format(club_data['block_count']))
