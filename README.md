@@ -16,10 +16,10 @@ Unity indicator that displays information relevant to RaiBlocks trading and netw
 * Transactions per second
 * Frontiers count
 * Links to useful RaiBlocks websites
+* Top 20 Cryptos ref
 
 ## Desired Features
 
-* Sub-menu of other top market cap crypto prices
 * Sub-menu of tracked accounts and balances
 * Notifications of pending blocks on watched accounts
 * Notifications of threshold price change

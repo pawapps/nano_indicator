@@ -102,10 +102,11 @@ class RaiBlocks_Indicator():
     def fetch_coinmarket(self):
         response = urllib.request.urlopen('https://api.coinmarketcap.com/v1/ticker/')
         data = json.loads(response.read().decode('utf-8'))
+        raiblocks = None
         for d in data:
             if d['id'] == 'raiblocks':
-                return d
-        return None
+                raiblocks = d
+        return raiblocks, data[:20]
 
     def fetch_club(self):
         response = urllib.request.urlopen('https://www.raiblocks.club/blocks')
@@ -126,6 +127,19 @@ class RaiBlocks_Indicator():
         self.item_updated = gtk.MenuItem('Last Updated: Never')
         self.item_updated.connect('activate', self.update)
         menu.append(self.item_updated)
+
+        menu.append(gtk.SeparatorMenuItem())
+
+        menu_top20 = gtk.Menu()
+        item_top20 = gtk.MenuItem('Top 20 Crypto')
+        menu.append(item_top20)
+        item_top20.set_submenu(menu_top20)
+
+        self.item_crypto = []
+        for i in range(20):
+            self.item_crypto.append(gtk.MenuItem('Unknown'))
+            self.item_crypto[-1].connect('activate', self.set_default_display)
+            menu_top20.append(self.item_crypto[-1])
 
         menu.append(gtk.SeparatorMenuItem())
 
@@ -157,6 +171,10 @@ class RaiBlocks_Indicator():
         self.item_market_cap = gtk.MenuItem('Market Cap: Unknown')
         self.item_market_cap.connect('activate', self.set_default_display)
         menu.append(self.item_market_cap)
+
+        self.item_rank = gtk.MenuItem('CMC Rank: Unknown')
+        self.item_rank.connect('activate', self.set_default_display)
+        menu.append(self.item_rank)
 
         menu.append(gtk.SeparatorMenuItem())
 
@@ -227,6 +245,7 @@ class RaiBlocks_Indicator():
         menu.append(item_quit)
 
         menu.show_all()
+        menu_top20.show_all()
         return menu
 
     def set_default_display(self, w=None):
@@ -243,14 +262,18 @@ class RaiBlocks_Indicator():
         self.last_updated = datetime.datetime.now()
         self.item_updated.set_label('Last Updated: {:%Y-%m-%d %H:%M:%S}'.format(self.last_updated))
         
-        cm_data = self.fetch_coinmarket()
-        self.item_price_usd.set_label('${}'.format(cm_data['price_usd']))
-        self.item_price_btc.set_label('฿{}'.format(cm_data['price_btc']))
-        self.item_price_1h.set_label('1h: {}%'.format(cm_data['percent_change_1h']))
-        self.item_price_24h.set_label('24h: {}%'.format(cm_data['percent_change_24h']))
-        self.item_price_7d.set_label('7d: {}%'.format(cm_data['percent_change_7d']))
-        self.item_24h_volume_usd.set_label('Volume: ${}'.format(cm_data['24h_volume_usd']))
-        self.item_market_cap.set_label('Market Cap: ${}'.format(cm_data['market_cap_usd']))
+        cm_data_rai, cm_data_top20 = self.fetch_coinmarket()
+        self.item_price_usd.set_label('${}'.format(cm_data_rai['price_usd']))
+        self.item_price_btc.set_label('฿{}'.format(cm_data_rai['price_btc']))
+        self.item_price_1h.set_label('1h: {}%'.format(cm_data_rai['percent_change_1h']))
+        self.item_price_24h.set_label('24h: {}%'.format(cm_data_rai['percent_change_24h']))
+        self.item_price_7d.set_label('7d: {}%'.format(cm_data_rai['percent_change_7d']))
+        self.item_24h_volume_usd.set_label('Volume: ${}'.format(cm_data_rai['24h_volume_usd']))
+        self.item_market_cap.set_label('Market Cap: ${}'.format(cm_data_rai['market_cap_usd']))
+        self.item_rank.set_label('CMC Rank: #{}'.format(cm_data_rai['rank']))
+
+        for i in range(20):
+            self.item_crypto[i].set_label('{}.) {}: ${} (${})'.format(i+1, cm_data_top20[i]['name'], cm_data_top20[i]['price_usd'], cm_data_top20[i]['market_cap_usd']))
         
         club_data = self.fetch_club()
         self.item_block_count.set_label('Block Count: {}'.format(club_data['block_count']))
