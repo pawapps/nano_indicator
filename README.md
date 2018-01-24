@@ -17,6 +17,13 @@ Unity indicator that displays information relevant to RaiBlocks trading and netw
 * Frontiers count
 * Links to useful RaiBlocks websites
 
+## Desired Features
+
+* Sub-menu of other top market cap crypto prices
+* Sub-menu of tracked accounts and balances
+* Notifications of pending blocks on watched accounts
+* Notifications of threshold price change
+
 ## What is RaiBlocks?
 
 Check out [RaiBlocks.net](https://www.raiblocks.net) for the official site and white paper.  More information is also found at [RaiBlocks.club](https://www.raiblocks.club) in their [FAQ](https://www.raiblocks.club/faq) and [docs](https://www.raiblocks.club/docs) sections.
