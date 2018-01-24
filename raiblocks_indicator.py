@@ -41,13 +41,13 @@ gi.require_version('Notify', '0.7')
 from gi.repository import Gtk as gtk
 from gi.repository import AppIndicator3 as appindicator
 from gi.repository import Notify as notify
+from gi.repository import GLib as glib
 import signal
 import os
 import json
 import urllib.request
 import base64
 import tempfile
-import threading
 import datetime
 import webbrowser
 
@@ -226,7 +226,7 @@ class RaiBlocks_Indicator():
 
     def update(self, w=None):
         if self.update_timer:
-            self.update_timer.cancel()
+            glib.source_remove(self.update_timer)
 
         self.last_updated = datetime.datetime.now()
         self.item_updated.set_label('Last Updated: {:%Y-%m-%d %H:%M:%S}'.format(self.last_updated))
@@ -248,9 +248,7 @@ class RaiBlocks_Indicator():
 
         self.ind.set_label(self.default.get_label(), '')
 
-        self.update_timer = threading.Timer(self.update_period, self.update)
-        self.update_timer.setDaemon(True)
-        self.update_timer.start()
+        self.update_timer = glib.timeout_add_seconds(self.update_period, self.update)
 
 
 
