@@ -329,21 +329,19 @@ class RaiBlocks_Indicator():
         kucoin_data = self.fetch_kucoin()
         self.item_kucoin_btc.set_label('Kucoin (BTC): {} | {}'.format(kucoin_data['sell'], kucoin_data['buy']))
 
-        best_arb_ret = 0.0
-        best_arb_ap = None
-        arb_pairs = [   (float(bitgrail_data['ask']), float(kucoin_data['buy'])),
-                        (float(kucoin_data['sell']), float(bitgrail_data['bid'])) ]
-        arb_actions = [ 'BG > Ku',
-                        'Ku > BG' ]
-        for i in range(len(arb_pairs)):
-            ap = arb_pairs[i]
-            ret = (max(ap) - min(ap)) / min(ap)
-            if ret > best_arb_ret:
-                best_arb = i
-                best_arb_ret = ret
-        label = '{} | {} | {} | {:1.2}%'.format(arb_pairs[i][0], arb_actions[best_arb], arb_pairs[i][1], best_arb_ret*100)
+        #if float(bitgrail_data['bid']) > float(kucoin_data['sell']):
+        ret = (float(bitgrail_data['bid']) - float(kucoin_data['sell'])) / float(kucoin_data['sell'])
+        best_ret = ret
+        label = 'Arb: {} | B:Ku S:BG | {} | {:1.2}%'.format(kucoin_data['sell'], bitgrail_data['bid'], best_ret*100)
+
+        #if float(kucoin_data['buy']) > float(bitgrail_data['ask']):
+        ret = (float(kucoin_data['buy']) - float(bitgrail_data['ask'])) / float(bitgrail_data['ask'])
+        if ret > best_ret:
+            best_ret = ret
+            label = 'Arb: {} | B:BG S:Ku | {} | {:1.2}%'.format(bitgrail_data['ask'], kucoin_data['buy'], best_ret*100)
+
         self.item_arb.set_label(label)
-        if best_arb_ret > 0.01:
+        if best_ret > 0.01:
             notify.Notification.new("<b>Arbitrage Opportunity</b>", label, None).show()
         
         self.ind.set_label(self.default.get_label(), '')
