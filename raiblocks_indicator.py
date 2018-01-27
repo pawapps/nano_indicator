@@ -332,7 +332,7 @@ class RaiBlocks_Indicator():
         best_arb_ret = 0.0
         best_arb_ap = None
         arb_pairs = [   (float(bitgrail_data['ask']), float(kucoin_data['buy'])),
-                        (float(bitgrail_data['bid']), float(kucoin_data['sell'])) ]
+                        (float(kucoin_data['sell']), float(bitgrail_data['bid'])) ]
         arb_actions = [ 'BG > Ku',
                         'Ku > BG' ]
         for i in range(len(arb_pairs)):
@@ -341,9 +341,10 @@ class RaiBlocks_Indicator():
             if ret > best_arb_ret:
                 best_arb = i
                 best_arb_ret = ret
-        self.item_arb.set_label('{}: {:1.2}%'.format(arb_actions[best_arb], best_arb_ret*100))
+        label = '{} | {} | {} | {:1.2}%'.format(arb_pairs[i][0], arb_actions[best_arb], arb_pairs[i][1], best_arb_ret*100)
+        self.item_arb.set_label(label)
         if best_arb_ret > 0.01:
-            notify.Notification.new("<b>Arbitrage Opportunity</b>", '{}: {:1.2}%'.format(arb_actions[best_arb], best_arb_ret*100), None).show()
+            notify.Notification.new("<b>Arbitrage Opportunity</b>", label, None).show()
         
         self.ind.set_label(self.default.get_label(), '')
 
