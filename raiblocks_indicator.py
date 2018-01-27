@@ -68,6 +68,7 @@ class RaiBlocks_Indicator():
         self.last_updated = None
         self.item_updated = None
         self.default = None
+        self.arb_notify = True
 
         # Set Icon
         f = tempfile.NamedTemporaryFile(delete=False)
@@ -164,6 +165,10 @@ class RaiBlocks_Indicator():
         self.item_arb = gtk.MenuItem('Arb: Unknown')
         self.item_arb.connect('activate', self.set_default_display)
         menu_exchanges.append(self.item_arb)
+
+        self.item_notify_arb = gtk.MenuItem('Disable Arb Notifications')
+        self.item_notify_arb.connect('activate', self.toggle_arb_notify)
+        menu_exchanges.append(self.item_notify_arb)
 
         self.item_bitgrail_btc = gtk.MenuItem('BitGrail (BTC): Unknown')
         self.item_bitgrail_btc.connect('activate', self.set_default_display)
@@ -287,6 +292,13 @@ class RaiBlocks_Indicator():
     def launch_website(self, w=None):
         webbrowser.open_new_tab('http://www.{}'.format(w.get_label()))
 
+    def toggle_arb_notify(self, w=None):
+        self.arb_notify = not self.arb_notify
+        if self.arb_notify:
+            self.item_notify_arb.set_label('Disable Arb Notifications')
+        else:
+            self.item_notify_arb.set_label('Enable Arb Notifications')
+
     def update(self, w=None):
         if self.update_timer:
             glib.source_remove(self.update_timer)
@@ -341,7 +353,7 @@ class RaiBlocks_Indicator():
             label = 'Arb: {} | B:BG S:Ku | {} | {:1.2}%'.format(bitgrail_data['ask'], kucoin_data['buy'], best_ret*100)
 
         self.item_arb.set_label(label)
-        if best_ret > 0.01:
+        if self.arb_notify and best_ret > 0.001:
             notify.Notification.new("<b>Arbitrage Opportunity</b>", label, None).show()
         
         self.ind.set_label(self.default.get_label(), '')
