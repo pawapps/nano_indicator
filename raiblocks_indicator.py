@@ -99,6 +99,21 @@ class RaiBlocks_Indicator():
     def joke(self, w=None):
         notify.Notification.new("<b>Joke</b>", self.fetch_joke(), None).show()
 
+    def fetch_bitgrail(self):
+        request = urllib.request.Request('https://api.bitgrail.com/v1/markets', headers={'User-Agent': 'Mozilla/5.0'})
+        response = urllib.request.urlopen(request)
+        data = json.loads(response.read().decode('utf-8'))['response']['BTC']['markets']['XRB/BTC']
+        return data
+
+    def fetch_kucoin(self):
+        request = urllib.request.Request('https://api.kucoin.com/v1/open/tick', headers={'User-Agent': 'Mozilla/5.0'})
+        response = urllib.request.urlopen(request)
+        data = json.loads(response.read().decode('utf-8'))['data']
+        for d in data:
+            if d['symbol'] == 'XRB-BTC':
+                return d
+        return None
+
     def fetch_coinmarket(self):
         response = urllib.request.urlopen('https://api.coinmarketcap.com/v1/ticker/')
         data = json.loads(response.read().decode('utf-8'))
@@ -140,6 +155,23 @@ class RaiBlocks_Indicator():
             self.item_crypto.append(gtk.MenuItem('Unknown'))
             self.item_crypto[-1].connect('activate', self.set_default_display)
             menu_top20.append(self.item_crypto[-1])
+
+        menu_exchanges = gtk.Menu()
+        item_exchanges = gtk.MenuItem('Exchanges')
+        menu.append(item_exchanges)
+        item_exchanges.set_submenu(menu_exchanges)
+
+        self.item_arb = gtk.MenuItem('Arb: Unknown')
+        self.item_arb.connect('activate', self.set_default_display)
+        menu_exchanges.append(self.item_arb)
+
+        self.item_bitgrail_btc = gtk.MenuItem('BitGrail (BTC): Unknown')
+        self.item_bitgrail_btc.connect('activate', self.set_default_display)
+        menu_exchanges.append(self.item_bitgrail_btc)
+
+        self.item_kucoin_btc = gtk.MenuItem('Kucoin (BTC): Unknown')
+        self.item_kucoin_btc.connect('activate', self.set_default_display)
+        menu_exchanges.append(self.item_kucoin_btc)
 
         menu.append(gtk.SeparatorMenuItem())
 
@@ -245,7 +277,7 @@ class RaiBlocks_Indicator():
         menu.append(item_quit)
 
         menu.show_all()
-        menu_top20.show_all()
+        #menu_top20.show_all()
         return menu
 
     def set_default_display(self, w=None):
@@ -291,6 +323,28 @@ class RaiBlocks_Indicator():
         self.item_24h_tps.set_label('24h: {:1.3f} tps'.format(club_data['tx_rate_24_hr']))
         self.item_frontiers.set_label('Frontiers: {}'.format(club_data['frontier_count']))
 
+        bitgrail_data = self.fetch_bitgrail()
+        self.item_bitgrail_btc.set_label('BitGrail (BTC): {} | {}'.format(bitgrail_data['ask'], bitgrail_data['bid']))
+
+        kucoin_data = self.fetch_kucoin()
+        self.item_kucoin_btc.set_label('Kucoin (BTC): {} | {}'.format(kucoin_data['sell'], kucoin_data['buy']))
+
+        best_arb_ret = 0.0
+        best_arb_ap = None
+        arb_pairs = [   (float(bitgrail_data['ask']), float(kucoin_data['buy'])),
+                        (float(bitgrail_data['bid']), float(kucoin_data['sell'])) ]
+        arb_actions = [ 'BG > Ku',
+                        'Ku > BG' ]
+        for i in range(len(arb_pairs)):
+            ap = arb_pairs[i]
+            ret = (max(ap) - min(ap)) / min(ap)
+            if ret > best_arb_ret:
+                best_arb = i
+                best_arb_ret = ret
+        self.item_arb.set_label('{}: {:1.2}%'.format(arb_actions[best_arb], best_arb_ret*100))
+        if best_arb_ret > 0.01:
+            notify.Notification.new("<b>Arbitrage Opportunity</b>", '{}: {:1.2}%'.format(arb_actions[best_arb], best_arb_ret*100), None).show()
+        
         self.ind.set_label(self.default.get_label(), '')
 
         self.update_timer = glib.timeout_add_seconds(self.update_period, self.update)
