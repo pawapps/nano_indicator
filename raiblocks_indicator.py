@@ -353,7 +353,7 @@ class RaiBlocks_Indicator():
             label = 'Arb: {} | B:BG S:Ku | {} | {:1.2}%'.format(bitgrail_data['ask'], kucoin_data['buy'], best_ret*100)
 
         self.item_arb.set_label(label)
-        if self.arb_notify and best_ret > 0.001:
+        if self.arb_notify and best_ret > 0.01:
             notify.Notification.new("<b>Arbitrage Opportunity</b>", label, None).show()
         
         self.ind.set_label(self.default.get_label(), '')
