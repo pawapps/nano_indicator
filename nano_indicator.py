@@ -116,7 +116,8 @@ class RaiBlocks_Indicator():
         return None
 
     def fetch_coinmarket(self):
-        response = urllib.request.urlopen('https://api.coinmarketcap.com/v1/ticker/')
+        request = urllib.request.Request('https://api.coinmarketcap.com/v1/ticker/', headers={'User-Agent': 'Mozilla/5.0'})
+        response = urllib.request.urlopen(request)
         data = json.loads(response.read().decode('utf-8'))
         raiblocks = None
         for d in data:
@@ -125,7 +126,8 @@ class RaiBlocks_Indicator():
         return raiblocks, data[:20]
 
     def fetch_club(self):
-        response = urllib.request.urlopen('https://www.raiblocks.club/blocks')
+        request = urllib.request.Request('https://www.nanode.co/blocks', headers={'User-Agent': 'Mozilla/5.0'})
+        response = urllib.request.urlopen(request)
         lines = response.readlines()
         for line in lines:
             line = line.decode('utf-8').strip()
