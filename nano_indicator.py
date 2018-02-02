@@ -101,42 +101,54 @@ class RaiBlocks_Indicator():
         notify.Notification.new("<b>Joke</b>", self.fetch_joke(), None).show()
 
     def fetch_bitgrail(self):
-        request = urllib.request.Request('https://api.bitgrail.com/v1/markets', headers={'User-Agent': 'Mozilla/5.0'})
-        response = urllib.request.urlopen(request)
-        data = json.loads(response.read().decode('utf-8'))['response']['BTC']['markets']['XRB/BTC']
+        try:
+            request = urllib.request.Request('https://api.bitgrail.com/v1/markets', headers={'User-Agent': 'Mozilla/5.0'})
+            response = urllib.request.urlopen(request)
+            data = json.loads(response.read().decode('utf-8'))['response']['BTC']['markets']['XRB/BTC']
+        except:
+            data = {}
         return data
 
     def fetch_kucoin(self):
-        request = urllib.request.Request('https://api.kucoin.com/v1/open/tick', headers={'User-Agent': 'Mozilla/5.0'})
-        response = urllib.request.urlopen(request)
-        data = json.loads(response.read().decode('utf-8'))['data']
-        for d in data:
-            if d['symbol'] == 'XRB-BTC':
-                return d
+        try:
+            request = urllib.request.Request('https://api.kucoin.com/v1/open/tick', headers={'User-Agent': 'Mozilla/5.0'})
+            response = urllib.request.urlopen(request)
+            data = json.loads(response.read().decode('utf-8'))['data']
+            for d in data:
+                if d['symbol'] == 'XRB-BTC':
+                    return d
+        except:
+            return {}
         return None
 
     def fetch_coinmarket(self):
-        request = urllib.request.Request('https://api.coinmarketcap.com/v1/ticker/', headers={'User-Agent': 'Mozilla/5.0'})
-        response = urllib.request.urlopen(request)
-        data = json.loads(response.read().decode('utf-8'))
-        raiblocks = None
-        for d in data:
-            if d['id'] == 'raiblocks':
-                raiblocks = d
+        try:
+            request = urllib.request.Request('https://api.coinmarketcap.com/v1/ticker/', headers={'User-Agent': 'Mozilla/5.0'})
+            response = urllib.request.urlopen(request)
+            data = json.loads(response.read().decode('utf-8'))
+            raiblocks = None
+            for d in data:
+                if d['id'] == 'raiblocks':
+                    raiblocks = d
+        except:
+            return {}, {}
         return raiblocks, data[:20]
 
     def fetch_club(self):
-        request = urllib.request.Request('https://www.nanode.co/blocks', headers={'User-Agent': 'Mozilla/5.0'})
-        response = urllib.request.urlopen(request)
-        lines = response.readlines()
-        for line in lines:
-            line = line.decode('utf-8').strip()
-            if line.startswith('__NEXT_DATA__'):
-                line = line.split('= ')[1]
-                data = json.loads(line)
-                break
-        data = data['props']['networkSummary']
-        del(data['latest_transactions'])
+        try:
+            request = urllib.request.Request('https://www.nanode.co/blocks', headers={'User-Agent': 'Mozilla/5.0'})
+            response = urllib.request.urlopen(request)
+            lines = response.readlines()
+            for line in lines:
+                line = line.decode('utf-8').strip()
+                if line.startswith('__NEXT_DATA__'):
+                    line = line.split('= ')[1]
+                    data = json.loads(line)
+                    break
+            data = data['props']['networkSummary']
+            del(data['latest_transactions'])
+        except:
+            data = {}
         return data
 
     def build_menu(self):
@@ -338,21 +350,33 @@ class RaiBlocks_Indicator():
         self.item_frontiers.set_label('Frontiers: {}'.format(club_data['frontier_count']))
 
         bitgrail_data = self.fetch_bitgrail()
-        self.item_bitgrail_btc.set_label('BitGrail (BTC): {} | {}'.format(bitgrail_data['ask'], bitgrail_data['bid']))
+        try:
+            self.item_bitgrail_btc.set_label('BitGrail (BTC): {} | {}'.format(bitgrail_data['ask'], bitgrail_data['bid']))
+        except:
+            self.item_bitgrail_btc.set_label('BitGrail (BTC): {} | {}'.format('Error Rx', 'Error Rx'))
 
         kucoin_data = self.fetch_kucoin()
-        self.item_kucoin_btc.set_label('Kucoin (BTC): {} | {}'.format(kucoin_data['sell'], kucoin_data['buy']))
+        try:
+            self.item_kucoin_btc.set_label('Kucoin (BTC): {} | {}'.format(kucoin_data['sell'], kucoin_data['buy']))
+        except:
+            self.item_kucoin_btc.set_label('Kucoin (BTC): {} | {}'.format('Error Rx', 'Error Rx'))
 
-        #if float(bitgrail_data['bid']) > float(kucoin_data['sell']):
-        ret = (float(bitgrail_data['bid']) - float(kucoin_data['sell'])) / float(kucoin_data['sell'])
-        best_ret = ret
-        label = 'Arb: {} | B:Ku S:BG | {} | {:1.2}%'.format(kucoin_data['sell'], bitgrail_data['bid'], best_ret*100)
-
-        #if float(kucoin_data['buy']) > float(bitgrail_data['ask']):
-        ret = (float(kucoin_data['buy']) - float(bitgrail_data['ask'])) / float(bitgrail_data['ask'])
-        if ret > best_ret:
+        try:
+            ret = (float(bitgrail_data['bid']) - float(kucoin_data['sell'])) / float(kucoin_data['sell'])
             best_ret = ret
-            label = 'Arb: {} | B:BG S:Ku | {} | {:1.2}%'.format(bitgrail_data['ask'], kucoin_data['buy'], best_ret*100)
+            label = 'Arb: {} | B:Ku S:BG | {} | {:1.2}%'.format(kucoin_data['sell'], bitgrail_data['bid'], best_ret*100)
+        except:
+            best_ret = 0.0
+            label = 'Error receiving data'
+
+        try:
+            ret = (float(kucoin_data['buy']) - float(bitgrail_data['ask'])) / float(bitgrail_data['ask'])
+            if ret > best_ret:
+                best_ret = ret
+                label = 'Arb: {} | B:BG S:Ku | {} | {:1.2}%'.format(bitgrail_data['ask'], kucoin_data['buy'], best_ret*100)
+        except:
+            best_ret = 0.0
+            label = 'Error receiving data'
 
         self.item_arb.set_label(label)
         if self.arb_notify and best_ret > 0.01:
