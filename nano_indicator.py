@@ -54,7 +54,7 @@ import tempfile
 import datetime
 import webbrowser
 
-_version = '0.2.0'
+_version = '1.0.0'
 
 currency_mark = {
     'price_usd': '$',

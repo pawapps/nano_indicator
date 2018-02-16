@@ -1,6 +1,8 @@
 # Nano Indicator
 
-Unity indicator that displays information relevant to Nano trading and network operations.
+Unity/Gnome/GTK indicator that displays information relevant to Nano trading and network operations.
+
+![alt text](https://raw.githubusercontent.com/pawapps/nano_indicator/master/nano_indicator_1-0-0.gif "nano_indicator 1.0.0 demo gif")
 
 ## Features
 
@@ -17,6 +19,7 @@ Unity indicator that displays information relevant to Nano trading and network o
 * Frontiers count
 * Links to useful Nano websites
 * Top 20 Cryptos ref
+* Exchange prices
 
 ## Desired Features
 
