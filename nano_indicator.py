@@ -4,10 +4,13 @@
 # Name: Nano Indicator
 # Author: Jason Pawlak
 # Donations: xrb_1hi54n577fag69bgts53fwiq9ns45rrkgomyhk3smxti1sdgsscwrag1rnk1
-# Description: This is an indicator for Unity menu bar that displays
+# Description: This is an indicator for Unity/Gnome/Gtk menu bar that displays
 #  information about Nano
 # Refs:
-#  API: https://lazka.github.io/pgi-docs/AppIndicator3-0.1/classes/Indicator.html
+#  Tutorial: https://lazka.github.io/pgi-docs/AppIndicator3-0.1/classes/Indicator.html
+# Data Sources:
+#  CoinMarketCap - https://coinmarketcap.com/currencies/raiblocks/
+#  Nanode.co - https://www.nanode.co/
 #
 
 ####################################
@@ -51,7 +54,7 @@ import tempfile
 import datetime
 import webbrowser
 
-_version = '0.1.0'
+_version = '0.2.0'
 
 currency_mark = {
     'price_usd': '$',
@@ -108,26 +111,45 @@ class Nano_Indicator():
 
         gtk.main()
 
-    def fetch_bitgrail(self):
+    def fetch_markets(self):
+        #TODO: this is oh so fragile...
         try:
-            request = urllib.request.Request('https://api.bitgrail.com/v1/markets', headers={'User-Agent': 'Mozilla/5.0'})
+            request = urllib.request.Request('https://coinmarketcap.com/currencies/raiblocks/', headers={'User-Agent': 'Mozilla/5.0'})
             response = urllib.request.urlopen(request)
-            data = json.loads(response.read().decode('utf-8'))['response']['BTC']['markets']['XRB/BTC']
-        except:
-            data = {}
-        return data
+            lines = response.readlines()
+            markets = []
+            for i in range(len(lines)):
+                native = None
+                exchange = None
+                unit = None
+                line = lines[i].decode('utf-8').strip()
+                if 'class="price"' in line:
+                    try:
+                        native = line.split('data-native="')[-1].split('"')[0]
+                        exchange_line = lines[i-7].decode('utf-8').strip()
+                        try:
+                            exchange = exchange_line.split('>')[2].split('<')[0]
+                        except:
+                            # This is so ugly ... anyone looking at this code ... please don't judge me.  Ok, judge me but then send code to parse html more clealy.
+                            exchange_line = lines[i-8].decode('utf-8').strip()
+                            exchange = exchange_line.split('>')[2].split('<')[0]
+                        unit = exchange_line.split('<')[-3].split('>')[-1]
+                    except:
+                        pass
+                    markets.append({
+                        'exchange': exchange,
+                        'unit': unit,
+                        'native': native,
+                    })
 
-    def fetch_kucoin(self):
-        try:
-            request = urllib.request.Request('https://api.kucoin.com/v1/open/tick', headers={'User-Agent': 'Mozilla/5.0'})
-            response = urllib.request.urlopen(request)
-            data = json.loads(response.read().decode('utf-8'))['data']
-            for d in data:
-                if d['symbol'] == 'XRB-BTC':
-                    return d
         except:
-            return {}
-        return None
+            pass
+
+        finally:
+            if len(markets) > 0:
+                return sorted(markets, key=lambda k: '{}{}'.format(k['exchange'], k['unit']))
+            else:
+                return markets
 
     def fetch_coinmarket(self):
         try:
@@ -184,21 +206,12 @@ class Nano_Indicator():
         menu.append(item_exchanges)
         item_exchanges.set_submenu(menu_exchanges)
 
-        self.item_arb = gtk.MenuItem('Arb: Unknown')
-        self.item_arb.connect('activate', self.set_default_display)
-        menu_exchanges.append(self.item_arb)
-
-        self.item_notify_arb = gtk.MenuItem('Disable Arb Notifications')
-        self.item_notify_arb.connect('activate', self.toggle_arb_notify)
-        menu_exchanges.append(self.item_notify_arb)
-
-        self.item_bitgrail_btc = gtk.MenuItem('BitGrail (BTC): Unknown')
-        self.item_bitgrail_btc.connect('activate', self.set_default_display)
-        menu_exchanges.append(self.item_bitgrail_btc)
-
-        self.item_kucoin_btc = gtk.MenuItem('Kucoin (BTC): Unknown')
-        self.item_kucoin_btc.connect('activate', self.set_default_display)
-        menu_exchanges.append(self.item_kucoin_btc)
+        markets = self.fetch_markets()
+        self.item_market = []
+        for i in range(len(markets)):
+            self.item_market.append(gtk.MenuItem('Loading...'))
+            self.item_market[-1].connect('activate', self.set_default_display)
+            menu_exchanges.append(self.item_market[-1])
 
         menu.append(gtk.SeparatorMenuItem())
 
@@ -360,38 +373,14 @@ class Nano_Indicator():
         self.item_24h_tps.set_label('24h: {:1.3f} tps'.format(club_data['tx_rate_24_hr']))
         self.item_frontiers.set_label('Frontiers: {}'.format(club_data['frontier_count']))
 
-        bitgrail_data = self.fetch_bitgrail()
-        try:
-            self.item_bitgrail_btc.set_label('BitGrail (BTC): {} | {}'.format(bitgrail_data['ask'], bitgrail_data['bid']))
-        except:
-            self.item_bitgrail_btc.set_label('BitGrail (BTC): {} | {}'.format('Error Rx', 'Error Rx'))
-
-        kucoin_data = self.fetch_kucoin()
-        try:
-            self.item_kucoin_btc.set_label('Kucoin (BTC): {} | {}'.format(kucoin_data['sell'], kucoin_data['buy']))
-        except:
-            self.item_kucoin_btc.set_label('Kucoin (BTC): {} | {}'.format('Error Rx', 'Error Rx'))
-
-        try:
-            ret = (float(bitgrail_data['bid']) - float(kucoin_data['sell'])) / float(kucoin_data['sell'])
-            best_ret = ret
-            label = 'Arb: {} | B:Ku S:BG | {} | {:1.2}%'.format(kucoin_data['sell'], bitgrail_data['bid'], best_ret*100)
-        except:
-            best_ret = 0.0
-            label = 'Error receiving data'
-
-        try:
-            ret = (float(kucoin_data['buy']) - float(bitgrail_data['ask'])) / float(bitgrail_data['ask'])
-            if ret > best_ret:
-                best_ret = ret
-                label = 'Arb: {} | B:BG S:Ku | {} | {:1.2}%'.format(bitgrail_data['ask'], kucoin_data['buy'], best_ret*100)
-        except:
-            best_ret = 0.0
-            label = 'Error receiving data'
-
-        self.item_arb.set_label(label)
-        if self.arb_notify and best_ret > 0.01:
-            notify.Notification.new("<b>Arbitrage Opportunity</b>", label, None).show()
+        markets = self.fetch_markets()
+        for i in range(len(markets)):
+            self.item_market[i].set_label('{}: {} {}'.format(
+                markets[i]['exchange'],
+                markets[i]['native'],
+                markets[i]['unit']
+            )
+        )
 
         version = fetch_github_version()
         label = 'Version: {}'.format(_version)
