@@ -54,7 +54,7 @@ import tempfile
 import datetime
 import webbrowser
 
-_version = '1.0.0'
+_version = '1.0.1'
 
 currency_mark = {
     'price_usd': '$',
@@ -114,7 +114,7 @@ class Nano_Indicator():
     def fetch_markets(self):
         #TODO: this is oh so fragile...
         try:
-            request = urllib.request.Request('https://coinmarketcap.com/currencies/raiblocks/', headers={'User-Agent': 'Mozilla/5.0'})
+            request = urllib.request.Request('https://coinmarketcap.com/currencies/nano/', headers={'User-Agent': 'Mozilla/5.0'})
             response = urllib.request.urlopen(request)
             lines = response.readlines()
             markets = []
@@ -158,7 +158,7 @@ class Nano_Indicator():
             data = json.loads(response.read().decode('utf-8'))
             nano = None
             for d in data:
-                if d['id'] == 'raiblocks':
+                if d['id'] == 'nano':
                     nano = d
         except:
             return {}, {}
@@ -280,7 +280,7 @@ class Nano_Indicator():
 
         menu.append(gtk.SeparatorMenuItem())
 
-        item_nano_cmc = gtk.MenuItem('CoinMarketcap.com/currencies/raiblocks/')
+        item_nano_cmc = gtk.MenuItem('CoinMarketcap.com/currencies/nano/')
         item_nano_cmc.connect('activate', self.launch_website)
         menu.append(item_nano_cmc)
 
